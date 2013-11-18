@@ -4,6 +4,7 @@
  */
 
 var express = require('express');
+var ArticleProvider = require('./articleprovider-mongodb').ArticleProvider;
 var routes = require('./routes');
 var user = require('./routes/user');
 var http = require('http');
@@ -29,7 +30,39 @@ if ('development' == app.get('env')) {
   app.use(express.errorHandler());
 }
 
-app.get('/', routes.index);
+
+
+var articleProvider= new ArticleProvider('localhost', 27017);
+
+app.get('/', function(req, res) {
+		articleProvider.findAll( function(error, docs) {
+				res.render('index.jade', {title: 'Blog', articles: docs});
+		});
+});
+
+app.get('/blog/new', function(req, res) {
+		res.render('blog_new.jade', {title: 'New Post'});
+});
+
+app.post('/blog/new', function(req, res){
+		articleProvider.save({
+				title: req.param('title'),
+				body: req.param('body')
+		}, function( error, docs) {
+				res.redirect('/')
+		});
+});
+
+app.post('/blog/addComment', function(req, res) {
+		articleProvider.addCommentToArticle(req.param('_id'), {
+				person: req.param('person'),
+				comment: req.param('comment'),
+				created_at: new Date()
+				} , function( error, docs) {
+						res.redirect('/blog/' + req.param('_id'))
+				});
+});
+
 app.get('/users', user.list);
 
 http.createServer(app).listen(app.get('port'), function(){
