@@ -32,8 +32,8 @@ if ('development' == app.get('env')) {
 
 
 
-var articleProvider= new ArticleProvider('localhost', 27017);
-
+var articleProvider= (new ArticleProvider('localhost', 27017));
+// Routes
 app.get('/', function(req, res) {
 		articleProvider.findAll( function(error, docs) {
 				res.render('index.jade', {title: 'Blog', articles: docs});
@@ -53,6 +53,14 @@ app.post('/blog/new', function(req, res){
 		});
 });
 
+//getBlogs
+app.get('/blog/:id', function(req, res) {
+		articleProvider.findById(req.params.id, function(error, article) {
+				res.render('blog_show-final.jade', {title: article.title, article:article});
+		});
+});
+
+//addComment
 app.post('/blog/addComment', function(req, res) {
 		articleProvider.addCommentToArticle(req.param('_id'), {
 				person: req.param('person'),
@@ -61,13 +69,6 @@ app.post('/blog/addComment', function(req, res) {
 				} , function( error, docs) {
 						res.redirect('/blog/' + req.param('_id'))
 				});
-});
-
-app.get('/blog/:id', function(req, res) {
-		articleProvider.findById(req.params.id, function(error, article) {
-				res.render('blog_show-final.jade',
-									 {title: article.title, article: article});
-		});
 });
 
 app.get('/users', user.list);
